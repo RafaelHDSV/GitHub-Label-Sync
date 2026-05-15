@@ -17,10 +17,18 @@ import { EnvHttpProxyAgent, fetch as undiciFetch } from 'undici'
 
 const OctokitWithRetry = Octokit.plugin(retry)
 
+/** Padrão: fetch nativo do Node (bom no Windows). Use undici+proxy com GITHUB_USE_NODE_FETCH=0. */
+function useNativeNodeFetch() {
+  const v = String(process.env.GITHUB_USE_NODE_FETCH ?? '').trim().toLowerCase()
+  if (v === '0' || v === 'false' || v === 'no' || v === 'off') return false
+  if (v === '' || v === '1' || v === 'true' || v === 'yes' || v === 'on') return true
+  return true
+}
+
 function createOctokit(auth) {
   const retries = Number(process.env.GITHUB_RETRY_RETRIES)
   const retryOpts =
-    Number.isFinite(retries) && retries >= 0 ? { retries } : { retries: 4 }
+    Number.isFinite(retries) && retries >= 0 ? { retries } : { retries: 1 }
 
   const rawBase = process.env.GITHUB_API_URL?.trim()
   let baseUrl
@@ -29,9 +37,7 @@ function createOctokit(auth) {
     console.log(`Usando GITHUB_API_URL: ${baseUrl}`)
   }
 
-  const useNodeFetch = /^(1|true|yes)$/i.test(
-    String(process.env.GITHUB_USE_NODE_FETCH ?? '').trim()
-  )
+  const useNodeFetch = useNativeNodeFetch()
 
   const octokitOpts = {
     auth,
@@ -39,12 +45,7 @@ function createOctokit(auth) {
     retry: retryOpts
   }
 
-  // fetch do pacote undici + dispatcher ≠ curl (Schannel) nem Postman. Se curl/Node
-  // “puro” funcionar e este script não, tente GITHUB_USE_NODE_FETCH=1 no .env.
   if (useNodeFetch) {
-    console.log(
-      'GITHUB_USE_NODE_FETCH: usando fetch padrão do Node (sem undici custom).'
-    )
     return new OctokitWithRetry(octokitOpts)
   }
 
@@ -203,7 +204,7 @@ main().catch((err) => {
   }
   if (/ETIMEDOUT|ECONNREFUSED/i.test(msg) || (cause && /ETIMEDOUT|ECONNREFUSED/i.test(cause.message || ''))) {
     console.error(
-      'Dica: rota/proxy até api.github.com. README (ETIMEDOUT). Se curl no mesmo PC funciona, tente GITHUB_USE_NODE_FETCH=1 no .env.'
+      'Dica: rota/proxy até api.github.com. README (ETIMEDOUT). Para timeouts longos + proxy via undici, use GITHUB_USE_NODE_FETCH=0 no .env.'
     )
   }
   if (process.env.DEBUG) {

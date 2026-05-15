@@ -55,22 +55,20 @@ $env:GITHUB_TOKEN = "ghp_..."
 npm run sync
 ```
 
-Se aparecer **Connect Timeout** ou **500** intermitente na API, a rede ou o GitHub podem estar lentos. O script já usa timeouts maiores (60s de conexão por padrão) e **retentativas** automáticas. Opcional no `.env`:
+Se aparecer **Connect Timeout** ou **500** intermitente na API, ajuste opcional no `.env` (por padrão o script já usa **fetch nativo do Node** e **1** tentativa de retry do Octokit):
 
-- `GITHUB_CONNECT_TIMEOUT_MS` (padrão `60000`)
-- `GITHUB_HEADERS_TIMEOUT_MS` (padrão `120000`)
-- `GITHUB_BODY_TIMEOUT_MS` (padrão `120000`)
-- `GITHUB_RETRY_RETRIES` (padrão `4` tentativas com backoff)
-- `GITHUB_DNS_RESULT_ORDER=verbatim` — só se precisar da ordem DNS padrão do Node; o padrão do script é priorizar **IPv4** (`ipv4first`), o que costuma evitar atraso com `api.github.com` em algumas redes Windows.
-- `GITHUB_USE_NODE_FETCH=1` — usa o **fetch padrão do Node** em vez do `fetch` do pacote `undici` com dispatcher custom (útil se `curl` no mesmo PC funciona e o sync não). Ver subseção abaixo.
+- `GITHUB_RETRY_RETRIES` — número de retentativas do plugin (padrão **`1`**).
+- `GITHUB_USE_NODE_FETCH` — **omitido**, `1`, `true` ou `yes`: **fetch nativo** do Node (padrão). `0`, `false`, `no` ou `off`: modo **undici** com timeouts longos e **`EnvHttpProxyAgent`** (útil para `HTTPS_PROXY` / rede corporativa).
+- `GITHUB_CONNECT_TIMEOUT_MS`, `GITHUB_HEADERS_TIMEOUT_MS`, `GITHUB_BODY_TIMEOUT_MS` — só aplicam com **`GITHUB_USE_NODE_FETCH=0`** (padrão `60000` / `120000` / `120000`).
+- `GITHUB_DNS_RESULT_ORDER=verbatim` — só se precisar da ordem DNS padrão do Node; o padrão do script é priorizar **IPv4** (`ipv4first`).
 
 Defina `DEBUG=1` para imprimir o erro completo (inclui stack).
 
 ### `curl` ok, Postman ou `npm run sync` não?
 
-No Windows, o **`curl.exe`** frequentemente usa **Schannel** (TLS do sistema). A mensagem `schannel: remote party requests renegotiation` no verbose do curl costuma ser **informativa**, não prova por si só que “só Postman quebra”.
+No Windows, o **`curl.exe`** frequentemente usa **Schannel** (TLS do sistema). Este projeto **não é frontend** (`sync.mjs` é CLI Node; **CORS** não se aplica).
 
-Este projeto **não é frontend**: o `sync.mjs` roda no **Node**; **CORS** não se aplica. Se um `curl` ou um `fetch` mínimo no Node retorna `200` mas o sync falha, o caminho padrão do script (undici + timeouts + `EnvHttpProxyAgent`) pode estar divergindo desse stack — aí use **`GITHUB_USE_NODE_FETCH=1`** no `.env` e rode `npm run sync` de novo. Com isso, o Octokit usa o fetch nativo do processo (timeouts/proxy do undici deste script deixam de ser injetados nessa camada).
+Por padrão o Octokit usa o **fetch nativo do Node** (sem injetar o `fetch` do pacote `undici` com dispatcher). Se precisar do cliente undici (timeouts maiores, `HTTPS_PROXY` via `EnvHttpProxyAgent`), defina **`GITHUB_USE_NODE_FETCH=0`** no `.env`.
 
 ### `ETIMEDOUT` / conexão com `api.github.com`
 
@@ -79,7 +77,7 @@ Se o log mostrar **`connect ETIMEDOUT`** para um IP em `:443`, o Node **não est
 - Firewall ou antivírus bloqueando o `node.exe`; VPN instável; roteador/ISP.
 - Rede corporativa que **só sai pela internet via proxy HTTP(S)**.
 
-Nesse caso, configure no `.env` ou no shell as variáveis padrão de proxy (o script usa o **`EnvHttpProxyAgent`** do undici, que as respeita):
+Com **`GITHUB_USE_NODE_FETCH=0`**, configure no `.env` ou no shell as variáveis padrão de proxy (o script usa o **`EnvHttpProxyAgent`** do undici, que as respeita):
 
 - `HTTPS_PROXY` / `https_proxy` — ex.: `http://usuario:senha@proxy.empresa.com:8080`
 - `HTTP_PROXY` / `http_proxy` — se a sua política exigir
