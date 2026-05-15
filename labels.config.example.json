@@ -1,0 +1,26 @@
+{
+  "owner": "SEU_USUARIO_GITHUB",
+  "repositories": ["repo-x", "repo-y", "repo-z"],
+  "labels": [
+    {
+      "name": "tipo: bug",
+      "color": "d73a4a",
+      "description": "Algo não funciona como esperado"
+    },
+    {
+      "name": "tipo: feature",
+      "color": "a2eeef",
+      "description": "Nova funcionalidade ou melhoria"
+    },
+    {
+      "name": "prioridade: alta",
+      "color": "b60205",
+      "description": "Tratar antes das demais"
+    },
+    {
+      "name": "status: bloqueado",
+      "color": "ededed",
+      "description": "Aguardando dependência externa"
+    }
+  ]
+}

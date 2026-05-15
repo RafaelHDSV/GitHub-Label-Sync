@@ -1,0 +1,17 @@
+{
+  "name": "github-label-sync",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Alinha labels em vários repos GitHub: cria/atualiza e remove as que não estão no JSON.",
+  "type": "module",
+  "scripts": {
+    "sync": "node sync.mjs",
+    "sync:example": "node sync.mjs labels.config.example.json"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@octokit/rest": "^21.0.2"
+  }
+}
