@@ -1,10 +1,19 @@
 import 'dotenv/config'
+import dns from 'node:dns'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import process from 'node:process'
+
+// Reduz falhas em redes onde IPv6 para api.github.com atrasa ou não roteia (comum no Windows).
+const dnsOrder = process.env.GITHUB_DNS_RESULT_ORDER
+if (dnsOrder === 'verbatim') {
+  dns.setDefaultResultOrder('verbatim')
+} else {
+  dns.setDefaultResultOrder('ipv4first')
+}
 import { retry } from '@octokit/plugin-retry'
 import { Octokit } from '@octokit/rest'
-import { Agent, fetch as undiciFetch } from 'undici'
+import { EnvHttpProxyAgent, fetch as undiciFetch } from 'undici'
 
 const OctokitWithRetry = Octokit.plugin(retry)
 
@@ -12,7 +21,7 @@ function createOctokit(auth) {
   const connectTimeout = Number(process.env.GITHUB_CONNECT_TIMEOUT_MS) || 60_000
   const headersTimeout = Number(process.env.GITHUB_HEADERS_TIMEOUT_MS) || 120_000
   const bodyTimeout = Number(process.env.GITHUB_BODY_TIMEOUT_MS) || 120_000
-  const dispatcher = new Agent({
+  const dispatcher = new EnvHttpProxyAgent({
     connectTimeout,
     headersTimeout,
     bodyTimeout
@@ -156,6 +165,24 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error(err.message || err)
+  const msg = err.message || String(err)
+  console.error(msg)
+  const cause = err.cause
+  if (cause) {
+    const causeMsg = cause.message || String(cause)
+    console.error('Causa (rede/TLS):', causeMsg)
+    const deep = cause.cause
+    if (deep && (deep.message || deep.code)) {
+      console.error('Detalhe:', deep.message || deep.code)
+    }
+  }
+  if (/ETIMEDOUT|ECONNREFUSED/i.test(msg) || (cause && /ETIMEDOUT|ECONNREFUSED/i.test(cause.message || ''))) {
+    console.error(
+      'Dica: falha de rota até api.github.com (firewall/VPN/ISP ou proxy). Veja README: seção ETIMEDOUT; use HTTPS_PROXY se a rede for corporativa.'
+    )
+  }
+  if (process.env.DEBUG) {
+    console.error(err)
+  }
   process.exit(1)
 })

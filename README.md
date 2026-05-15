@@ -61,6 +61,24 @@ Se aparecer **Connect Timeout** ou **500** intermitente na API, a rede ou o GitH
 - `GITHUB_HEADERS_TIMEOUT_MS` (padrão `120000`)
 - `GITHUB_BODY_TIMEOUT_MS` (padrão `120000`)
 - `GITHUB_RETRY_RETRIES` (padrão `4` tentativas com backoff)
+- `GITHUB_DNS_RESULT_ORDER=verbatim` — só se precisar da ordem DNS padrão do Node; o padrão do script é priorizar **IPv4** (`ipv4first`), o que costuma evitar atraso com `api.github.com` em algumas redes Windows.
+
+Defina `DEBUG=1` para imprimir o erro completo (inclui stack).
+
+### `ETIMEDOUT` / conexão com `api.github.com`
+
+Se o log mostrar **`connect ETIMEDOUT`** para um IP em `:443`, o Node **não está conseguindo abrir TCP** até a API do GitHub. Isso costuma ser **rede local**, não token:
+
+- Firewall ou antivírus bloqueando o `node.exe`; VPN instável; roteador/ISP.
+- Rede corporativa que **só sai pela internet via proxy HTTP(S)**.
+
+Nesse caso, configure no `.env` ou no shell as variáveis padrão de proxy (o script usa o **`EnvHttpProxyAgent`** do undici, que as respeita):
+
+- `HTTPS_PROXY` / `https_proxy` — ex.: `http://usuario:senha@proxy.empresa.com:8080`
+- `HTTP_PROXY` / `http_proxy` — se a sua política exigir
+- `NO_PROXY` — hosts que não devem passar pelo proxy (ex.: `localhost,127.0.0.1`)
+
+Teste rápido fora do script: abra o mesmo Wi‑Fi no celular ou use outro link (hotspot) e rode `npm run sync` de novo.
 
 ## Comportamento importante
 
