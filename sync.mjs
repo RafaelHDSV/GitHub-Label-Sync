@@ -2,7 +2,34 @@ import 'dotenv/config'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import process from 'node:process'
+import { retry } from '@octokit/plugin-retry'
 import { Octokit } from '@octokit/rest'
+import { Agent, fetch as undiciFetch } from 'undici'
+
+const OctokitWithRetry = Octokit.plugin(retry)
+
+function createOctokit(auth) {
+  const connectTimeout = Number(process.env.GITHUB_CONNECT_TIMEOUT_MS) || 60_000
+  const headersTimeout = Number(process.env.GITHUB_HEADERS_TIMEOUT_MS) || 120_000
+  const bodyTimeout = Number(process.env.GITHUB_BODY_TIMEOUT_MS) || 120_000
+  const dispatcher = new Agent({
+    connectTimeout,
+    headersTimeout,
+    bodyTimeout
+  })
+  const fetchWithTimeouts = (url, init = {}) =>
+    undiciFetch(url, { ...init, dispatcher })
+
+  const retries = Number(process.env.GITHUB_RETRY_RETRIES)
+  const retryOpts =
+    Number.isFinite(retries) && retries >= 0 ? { retries } : { retries: 4 }
+
+  return new OctokitWithRetry({
+    auth,
+    request: { fetch: fetchWithTimeouts },
+    retry: retryOpts
+  })
+}
 
 function normalizeColor(color) {
   if (typeof color !== 'string' || !color.trim()) {
@@ -117,7 +144,7 @@ async function main() {
     process.exit(1)
   }
 
-  const octokit = new Octokit({ auth: token })
+  const octokit = createOctokit(token)
 
   for (const repo of repositories) {
     if (typeof repo !== 'string' || !repo.trim()) continue

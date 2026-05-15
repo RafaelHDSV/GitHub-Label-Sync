@@ -55,6 +55,13 @@ $env:GITHUB_TOKEN = "ghp_..."
 npm run sync
 ```
 
+Se aparecer **Connect Timeout** ou **500** intermitente na API, a rede ou o GitHub podem estar lentos. O script já usa timeouts maiores (60s de conexão por padrão) e **retentativas** automáticas. Opcional no `.env`:
+
+- `GITHUB_CONNECT_TIMEOUT_MS` (padrão `60000`)
+- `GITHUB_HEADERS_TIMEOUT_MS` (padrão `120000`)
+- `GITHUB_BODY_TIMEOUT_MS` (padrão `120000`)
+- `GITHUB_RETRY_RETRIES` (padrão `4` tentativas com backoff)
+
 ## Comportamento importante
 
 - **Remoção:** qualquer label presente no repositório cujo **nome** não apareça em `labels` do JSON é **apagada**. Issues e PRs **deixam de ter** essa label; o GitHub não “reaplica” automaticamente se você criar outra label com o mesmo nome depois.

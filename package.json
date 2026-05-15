@@ -12,7 +12,9 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@octokit/plugin-retry": "^8.1.0",
     "@octokit/rest": "^21.0.2",
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
+    "undici": "^7.25.0"
   }
 }
