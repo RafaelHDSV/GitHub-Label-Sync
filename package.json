@@ -12,6 +12,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@octokit/rest": "^21.0.2"
+    "@octokit/rest": "^21.0.2",
+    "dotenv": "^17.4.2"
   }
 }

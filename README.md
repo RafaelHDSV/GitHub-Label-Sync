@@ -31,6 +31,8 @@ npm install
 
 O arquivo `labels.config.json` está no `.gitignore` para reduzir o risco de versionar dados locais; use o `.example` como modelo no repositório.
 
+Opcionalmente, crie um `.env` na raiz (também ignorado pelo Git) com uma linha `GITHUB_TOKEN=...`. O `sync.mjs` carrega esse arquivo automaticamente via `dotenv`.
+
 ## Uso
 
 Defina `GITHUB_TOKEN` e execute na pasta do projeto:
