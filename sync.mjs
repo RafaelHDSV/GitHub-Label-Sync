@@ -18,6 +18,36 @@ import { EnvHttpProxyAgent, fetch as undiciFetch } from 'undici'
 const OctokitWithRetry = Octokit.plugin(retry)
 
 function createOctokit(auth) {
+  const retries = Number(process.env.GITHUB_RETRY_RETRIES)
+  const retryOpts =
+    Number.isFinite(retries) && retries >= 0 ? { retries } : { retries: 4 }
+
+  const rawBase = process.env.GITHUB_API_URL?.trim()
+  let baseUrl
+  if (rawBase) {
+    baseUrl = rawBase.replace(/\/+$/, '')
+    console.log(`Usando GITHUB_API_URL: ${baseUrl}`)
+  }
+
+  const useNodeFetch = /^(1|true|yes)$/i.test(
+    String(process.env.GITHUB_USE_NODE_FETCH ?? '').trim()
+  )
+
+  const octokitOpts = {
+    auth,
+    ...(baseUrl ? { baseUrl } : {}),
+    retry: retryOpts
+  }
+
+  // fetch do pacote undici + dispatcher ≠ curl (Schannel) nem Postman. Se curl/Node
+  // “puro” funcionar e este script não, tente GITHUB_USE_NODE_FETCH=1 no .env.
+  if (useNodeFetch) {
+    console.log(
+      'GITHUB_USE_NODE_FETCH: usando fetch padrão do Node (sem undici custom).'
+    )
+    return new OctokitWithRetry(octokitOpts)
+  }
+
   const connectTimeout = Number(process.env.GITHUB_CONNECT_TIMEOUT_MS) || 60_000
   const headersTimeout = Number(process.env.GITHUB_HEADERS_TIMEOUT_MS) || 120_000
   const bodyTimeout = Number(process.env.GITHUB_BODY_TIMEOUT_MS) || 120_000
@@ -29,14 +59,9 @@ function createOctokit(auth) {
   const fetchWithTimeouts = (url, init = {}) =>
     undiciFetch(url, { ...init, dispatcher })
 
-  const retries = Number(process.env.GITHUB_RETRY_RETRIES)
-  const retryOpts =
-    Number.isFinite(retries) && retries >= 0 ? { retries } : { retries: 4 }
-
   return new OctokitWithRetry({
-    auth,
-    request: { fetch: fetchWithTimeouts },
-    retry: retryOpts
+    ...octokitOpts,
+    request: { fetch: fetchWithTimeouts }
   })
 }
 
@@ -178,7 +203,7 @@ main().catch((err) => {
   }
   if (/ETIMEDOUT|ECONNREFUSED/i.test(msg) || (cause && /ETIMEDOUT|ECONNREFUSED/i.test(cause.message || ''))) {
     console.error(
-      'Dica: falha de rota até api.github.com (firewall/VPN/ISP ou proxy). Veja README: seção ETIMEDOUT; use HTTPS_PROXY se a rede for corporativa.'
+      'Dica: rota/proxy até api.github.com. README (ETIMEDOUT). Se curl no mesmo PC funciona, tente GITHUB_USE_NODE_FETCH=1 no .env.'
     )
   }
   if (process.env.DEBUG) {

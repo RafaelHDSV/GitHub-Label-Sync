@@ -62,8 +62,15 @@ Se aparecer **Connect Timeout** ou **500** intermitente na API, a rede ou o GitH
 - `GITHUB_BODY_TIMEOUT_MS` (padrão `120000`)
 - `GITHUB_RETRY_RETRIES` (padrão `4` tentativas com backoff)
 - `GITHUB_DNS_RESULT_ORDER=verbatim` — só se precisar da ordem DNS padrão do Node; o padrão do script é priorizar **IPv4** (`ipv4first`), o que costuma evitar atraso com `api.github.com` em algumas redes Windows.
+- `GITHUB_USE_NODE_FETCH=1` — usa o **fetch padrão do Node** em vez do `fetch` do pacote `undici` com dispatcher custom (útil se `curl` no mesmo PC funciona e o sync não). Ver subseção abaixo.
 
 Defina `DEBUG=1` para imprimir o erro completo (inclui stack).
+
+### `curl` ok, Postman ou `npm run sync` não?
+
+No Windows, o **`curl.exe`** frequentemente usa **Schannel** (TLS do sistema). A mensagem `schannel: remote party requests renegotiation` no verbose do curl costuma ser **informativa**, não prova por si só que “só Postman quebra”.
+
+Este projeto **não é frontend**: o `sync.mjs` roda no **Node**; **CORS** não se aplica. Se um `curl` ou um `fetch` mínimo no Node retorna `200` mas o sync falha, o caminho padrão do script (undici + timeouts + `EnvHttpProxyAgent`) pode estar divergindo desse stack — aí use **`GITHUB_USE_NODE_FETCH=1`** no `.env` e rode `npm run sync` de novo. Com isso, o Octokit usa o fetch nativo do processo (timeouts/proxy do undici deste script deixam de ser injetados nessa camada).
 
 ### `ETIMEDOUT` / conexão com `api.github.com`
 
