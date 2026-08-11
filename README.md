@@ -26,7 +26,7 @@ npm install
 2. Em `labels.config.json`:
 
    - **`owner`**: seu usuário GitHub (sem `@`).
-   - **`repositories`**: só o **nome** de cada repositório (sem `owner/`).
+   - **`repositories`**: só o **nome** de cada repositório (sem `owner/`). Obrigatório só quando você roda o sync **sem** nomes de repo na CLI.
    - **`labels`**: objetos com `name`, `color` (hex com ou sem `#`) e opcionalmente `description`.
 
 O arquivo `labels.config.json` está no `.gitignore` para reduzir o risco de versionar dados locais; use o `.example` como modelo no repositório.
@@ -42,10 +42,24 @@ set GITHUB_TOKEN=ghp_...
 npm run sync
 ```
 
+Para um repositório específico (sem editar `repositories` no JSON):
+
+```bash
+npm run sync -- nome-do-repo
+```
+
+Vários de uma vez:
+
+```bash
+npm run sync -- repo-a repo-b
+```
+
+Também aceita `owner/repo` se o `owner` for o mesmo do JSON. Sem argumentos na CLI, o sync usa a lista `repositories` do arquivo de config (comportamento anterior).
+
 Ou com caminho explícito para o JSON:
 
 ```bash
-node sync.mjs caminho\para\labels.config.json
+node sync.mjs caminho\para\labels.config.json nome-do-repo
 ```
 
 No PowerShell:

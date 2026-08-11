@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "sync": "node sync.mjs",
-    "sync:example": "node sync.mjs labels.config.example.json"
+    "sync:example": "node sync.mjs labels.config.example.json",
+    "test": "node --test cli.test.mjs"
   },
   "engines": {
     "node": ">=18"

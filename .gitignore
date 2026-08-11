@@ -1,3 +1,5 @@
 node_modules/
 labels.config.json
 .env
+docs
+docs/*

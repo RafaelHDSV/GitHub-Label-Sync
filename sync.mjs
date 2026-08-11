@@ -14,6 +14,7 @@ if (dnsOrder === 'verbatim') {
 import { retry } from '@octokit/plugin-retry'
 import { Octokit } from '@octokit/rest'
 import { EnvHttpProxyAgent, fetch as undiciFetch } from 'undici'
+import { parseCliArgs, resolveRepositories } from './cli.mjs'
 
 const OctokitWithRetry = Octokit.plugin(retry)
 
@@ -150,32 +151,41 @@ async function main() {
     process.exit(1)
   }
 
-  const configArg = process.argv[2] || 'labels.config.json'
+  const { configPath: configArg, repos: cliRepos } = parseCliArgs(process.argv)
   const configPath = resolve(process.cwd(), configArg)
   let text
   try {
     text = await readFile(configPath, 'utf8')
   } catch (e) {
     console.error(`Não foi possível ler o arquivo: ${configPath}`)
-    console.error('Uso: GITHUB_TOKEN=... node sync.mjs [caminho/para/labels.config.json]')
+    console.error(
+      'Uso: npm run sync -- <repo>   ou   node sync.mjs [labels.config.json] [repo…]'
+    )
     process.exit(1)
   }
 
   const config = JSON.parse(text)
   const owner = config.owner
-  const repositories = config.repositories
   const labels = config.labels
 
   if (!owner || typeof owner !== 'string') {
     console.error('O JSON precisa de "owner" (seu usuário GitHub).')
     process.exit(1)
   }
-  if (!Array.isArray(repositories) || repositories.length === 0) {
-    console.error('O JSON precisa de "repositories" (array de nomes de repo, sem owner).')
-    process.exit(1)
-  }
   if (!Array.isArray(labels) || labels.length === 0) {
     console.error('O JSON precisa de "labels" (array de objetos com name, color, opcional description).')
+    process.exit(1)
+  }
+
+  let repositories
+  try {
+    repositories = resolveRepositories({
+      owner,
+      cliRepos,
+      configRepositories: config.repositories
+    })
+  } catch (e) {
+    console.error(e.message || String(e))
     process.exit(1)
   }
 
