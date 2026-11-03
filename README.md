@@ -20,16 +20,33 @@ Vários repositórios no mesmo Project com labels diferentes viram ruído: cores
 | **Lista única** | Nome, cor e descrição definidos uma vez |
 | **Update seguro** | Atualiza o que já existe com o mesmo nome |
 | **Limpeza** | Remove labels que não estão na lista |
+| **CLI flexível** | Repos no JSON ou passados na linha de comando |
 
-## Para quem é
+## Como funciona
 
-Quem mantém vários repos GitHub no mesmo quadro e quer labels idênticas sem editar repo a repo.
+```text
+labels.config.json + GITHUB_TOKEN
+        ↓
+   sync.mjs  →  GitHub Labels API
+        ↓
+ create / update / delete até bater com a lista
+```
+
+`labels.config.json` e `.env` ficam fora do Git — use os `.example`.
+
+## Posicionamento
+
+| Label Sync é | Label Sync não é |
+|---|---|
+| Alinhamento de labels | Gestor de Projects/milestones |
+| Lista canônica destrutiva no excesso | Merge soft de labels extras |
+| Ferramenta local Node | SaaS |
 
 ## Stack (em uma linha)
 
 Node.js 18+ · GitHub REST labels · config JSON + token em `.env`.
 
-Detalhes: [`docs/context.md`](docs/context.md).
+Detalhes: [`docs/context.md`](docs/context.md) · especificação: [`docs/especificacao.md`](docs/especificacao.md).
 
 ## Começar
 
