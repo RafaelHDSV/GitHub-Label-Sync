@@ -1,82 +1,38 @@
-# github-label-sync
+<p align="center">
+  <strong>GitHub Label Sync</strong>
+</p>
 
-Ferramenta em Node para **alinhar labels** entre vários repositórios do GitHub (mesmo usuário): aplica a lista definida num JSON, **atualiza** o que já existe com o mesmo nome, **cria** o que falta e **remove** tudo o que não estiver nessa lista.
+<p align="center">
+  <strong>Um conjunto de labels. Todos os repositórios alinhados.</strong><br />
+  Cria, atualiza e remove labels para o Project Vieira falar a mesma língua.
+</p>
 
-Útil quando vários repos entram no mesmo Project e você quer **um conjunto único de labels** (nome, cor e descrição) em todos eles.
+---
 
-## Requisitos
+## Por que existe
 
-- Node.js 18 ou superior
-- Token do GitHub com permissão de escrita nas labels dos repositórios (PAT **classic** com escopo `repo` costuma bastar)
+Vários repositórios no mesmo Project com labels diferentes viram ruído: cores divergem, nomes duplicam, filtros quebram. Esta ferramenta aplica uma lista canônica em JSON e deixa o restante igual em todos os repos do usuário.
 
-## Instalação
+## O que você ganha
 
-```bash
-npm install
-```
+| | |
+|---|---|
+| **Lista única** | Nome, cor e descrição definidos uma vez |
+| **Update seguro** | Atualiza o que já existe com o mesmo nome |
+| **Limpeza** | Remove labels que não estão na lista |
 
-## Configuração
+## Para quem é
 
-1. Copie o exemplo e edite com seus dados:
+Quem mantém vários repos GitHub no mesmo quadro e quer labels idênticas sem editar repo a repo.
 
-   ```bash
-   copy labels.config.example.json labels.config.json
-   ```
+## Stack (em uma linha)
 
-2. Em `labels.config.json`:
+Node.js 18+ · GitHub REST labels · config JSON + token em `.env`.
 
-   - **`owner`**: seu usuário GitHub (sem `@`).
-   - **`repositories`**: só o **nome** de cada repositório (sem `owner/`). Obrigatório só quando você roda o sync **sem** nomes de repo na CLI.
-   - **`labels`**: objetos com `name`, `color` (hex com ou sem `#`) e opcionalmente `description`.
+Detalhes: [`docs/context.md`](docs/context.md).
 
-O arquivo `labels.config.json` está no `.gitignore` para reduzir o risco de versionar dados locais; use o `.example` como modelo no repositório.
+## Começar
 
-Opcionalmente, crie um `.env` na raiz (também ignorado pelo Git) com uma linha `GITHUB_TOKEN=...`. O `sync.mjs` carrega esse arquivo automaticamente via `dotenv`.
+Install, token e CLI: [`docs/ambiente-e-operacao.md`](docs/ambiente-e-operacao.md).
 
-## Uso
-
-Defina `GITHUB_TOKEN` e execute na pasta do projeto:
-
-```bash
-set GITHUB_TOKEN=ghp_...
-npm run sync
-```
-
-Para um repositório específico (sem editar `repositories` no JSON):
-
-```bash
-npm run sync -- nome-do-repo
-```
-
-Vários de uma vez:
-
-```bash
-npm run sync -- repo-a repo-b
-```
-
-Também aceita `owner/repo` se o `owner` for o mesmo do JSON. Sem argumentos na CLI, o sync usa a lista `repositories` do arquivo de config (comportamento anterior).
-
-Ou com caminho explícito para o JSON:
-
-```bash
-node sync.mjs caminho\para\labels.config.json nome-do-repo
-```
-
-No PowerShell:
-
-```powershell
-$env:GITHUB_TOKEN = "ghp_..."
-npm run sync
-```
-
-## Comportamento importante
-
-- **Remoção:** qualquer label presente no repositório cujo **nome** não apareça em `labels` do JSON é **apagada**. Issues e PRs **deixam de ter** essa label; o GitHub não “reaplica” automaticamente se você criar outra label com o mesmo nome depois.
-- **Atualização:** se o nome existe mas cor ou descrição mudaram, a label é atualizada.
-- **Criação:** nomes que ainda não existem são criados.
-
-Recomenda-se usar num ramo de teste ou num repo de prova antes de rodar em produção, até estar confiante na lista do JSON.
-
-## Licença
-
-MIT — ver [LICENSE](LICENSE).
+Contribuição: [`CONTRIBUTING.md`](CONTRIBUTING.md) · conduta: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) · mudanças: [`CHANGELOG.md`](CHANGELOG.md).
